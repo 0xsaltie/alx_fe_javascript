@@ -284,6 +284,12 @@ function init() {
 
   // Add event listeners
   ref.newQuoteBtn.addEventListener('click', showRandomQuotes);
+
+  // Run sync once immediately
+  syncQuotes();
+
+  // Run sync periodically (every 30s)
+  setInterval(syncQuotes, 30000);
 }
 init();
 
@@ -374,3 +380,61 @@ function notifyUser(message) {
 }
 
 document.getElementById("manualSync").addEventListener("click", syncWithServer);
+
+
+async function syncQuotes() {
+  console.log("🔄 Syncing quotes with server...");
+
+  try {
+    //  Fetch latest quotes from the server
+    const serverQuotes = await fetchQuotesFromServer();
+
+    //  Merge with local quotes
+    let updated = false;
+    serverQuotes.forEach(serverQuote => {
+      const existing = quotes.find(q => q.text === serverQuote.text);
+
+      if (!existing) {
+        // New quote from server — add it
+        quotes.push(serverQuote);
+        updated = true;
+      } else if (existing.category !== serverQuote.category) {
+        // Conflict: server version wins
+        existing.category = serverQuote.category;
+        updated = true;
+      }
+    });
+
+    //  Upload new local quotes to the server
+    for (const localQuote of quotes) {
+      const foundOnServer = serverQuotes.some(
+        q => q.text === localQuote.text
+      );
+
+      if (!foundOnServer) {
+        // Simulate POST to server
+        await fetch(SERVER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(localQuote)
+        });
+        console.log("✅ Sent new quote to server:", localQuote.text);
+      }
+    }
+
+    //  Save updated local data and refresh dropdown
+    if (updated) {
+      saveQuotes();
+      populateCategories();
+      notifyUser("Quotes synced successfully with server!");
+    } else {
+      console.log("No changes during sync.");
+    }
+
+  } catch (error) {
+    console.error("⚠️ Sync failed:", error);
+    notifyUser("Failed to sync with server. Using local data.");
+  }
+}
