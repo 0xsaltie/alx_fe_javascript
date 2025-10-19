@@ -1,35 +1,44 @@
-const STORAGE_KEY = 'quoteManager.quotes';
+// script.js - full reference
+
+const STORAGE_KEY = 'myQuotes.v1';
+let quotes = [];
+
+const el = {
+  quoteDisplay: document.getElementById('quoteDisplay'),
+  quoteCategory: document.getElementById('quoteCategory'),
+  randomBtn: document.getElementById('randomBtn'),
+  showAddFormBtn: document.getElementById('showAddFormBtn'),
+  addQuoteContainer: document.getElementById('addQuoteContainer')
+};
 
 const defaultQuotes = [
-  { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Inspiration" },
+  { text: "Be yourself; everyone else is already taken.", category: "Inspiration" },
   { text: "Simplicity is the soul of efficiency.", category: "Productivity" },
   { text: "In the middle of difficulty lies opportunity.", category: "Resilience" }
 ];
 
-let quotes = [];
-
-const ref = {
-  quoteDisplay: document.getElementById('quoteDisplay'),
-  newQuote: document.getElementById('newQuote'),
-  newQuoteCategory: document.getElementById('newQuoteCategory'),
-  newQuoteTextInput: document.getElementById('newQuoteText'),
-  newQuoteCategoryInput: document.getElementById('newQuoteCategoryInput'),
-  addQuoteBtn: document.getElementById('addQuoteBtn'),
-  message: document.getElementById('message')
-};
-
 function saveQuotes() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
+  } catch (e) {
+    console.error('Could not save quotes:', e);
+  }
 }
 
 function loadQuotes() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      quotes = defaultQuotes.slice();
+      saveQuotes();
+    } else {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) quotes = parsed;
+      else quotes = defaultQuotes.slice();
+    }
+  } catch (e) {
+    console.error('Could not load quotes:', e);
     quotes = defaultQuotes.slice();
-    saveQuotes();
-  } else {
-    const parsed = JSON.parse(raw);
-    quotes = Array.isArray(parsed) ? parsed : defaultQuotes.slice();
   }
 }
 
@@ -37,69 +46,136 @@ function randomIndex(n) {
   return Math.floor(Math.random() * n);
 }
 
-function showRandomQuotes() {
+function showRandomQuote() {
   if (!Array.isArray(quotes) || quotes.length === 0) {
-    ref.quoteDisplay.textContent = 'No quotes available.';
-    ref.newQuoteCategory.textContent = '';
+    el.quoteDisplay.textContent = 'No quotes available. Add one below!';
+    el.quoteCategory.textContent = '';
     return;
   }
 
   const idx = randomIndex(quotes.length);
   const q = quotes[idx];
 
-  ref.quoteDisplay.textContent = q.text;
-  ref.newQuoteCategory.textContent = `Category: ${q.category}`;
+  el.quoteCategory.textContent = q.category ? `Category: ${q.category}` : '';
+  el.quoteDisplay.textContent = q.text;
+}
+
+function createAddQuoteForm(container) {
+  container.innerHTML = '';
+
+  const form = document.createElement('form');
+  form.className = 'add-quote-form';
+  form.setAttribute('aria-label', 'Add Quote');
+
+  const labelText = document.createElement('label');
+  labelText.textContent = 'Quote text';
+  labelText.htmlFor = 'quoteText';
+
+  const inputText = document.createElement('input');
+  inputText.type = 'text';
+  inputText.id = 'quoteText';
+  inputText.placeholder = "Type the quote here";
+  inputText.required = true;
+
+  const labelCat = document.createElement('label');
+  labelCat.textContent = 'Category';
+  labelCat.htmlFor = 'quoteCategory';
+
+  const inputCat = document.createElement('input');
+  inputCat.type = 'text';
+  inputCat.id = 'quoteCategory';
+  inputCat.placeholder = "e.g. Inspiration";
+  inputCat.required = true;
+
+  const controls = document.createElement('div');
+  controls.style.marginTop = '8px';
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'submit';
+  addBtn.textContent = 'Add Quote';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.textContent = 'Cancel';
+
+  const err = document.createElement('div');
+  err.className = 'error';
+
+  controls.appendChild(addBtn);
+  controls.appendChild(cancelBtn);
+
+  form.appendChild(labelText);
+  form.appendChild(inputText);
+  form.appendChild(labelCat);
+  form.appendChild(inputCat);
+  form.appendChild(controls);
+  form.appendChild(err);
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    err.textContent = '';
+
+    const text = (inputText.value || '').trim();
+    const category = (inputCat.value || '').trim();
+
+    if (text.length < 3) {
+      err.textContent = 'Quote must be at least 3 characters.';
+      return;
+    }
+    if (category.length < 2) {
+      err.textContent = 'Category must be at least 2 characters.';
+      return;
+    }
+
+    const newQuote = { text, category };
+    quotes.push(newQuote);
+    saveQuotes();
+
+    el.quoteCategory.textContent = `Category: ${newQuote.category}`;
+    el.quoteDisplay.textContent = newQuote.text;
+
+    container.innerHTML = '';
+  });
+
+  cancelBtn.addEventListener('click', function () {
+    container.innerHTML = '';
+  });
+
+  container.appendChild(form);
+  inputText.focus();
+
+  return form;
 }
 
 function init() {
   loadQuotes();
-  ref.quoteDisplay.textContent = 'Click "Show New Quote" to see a quote.';
-  ref.newQuote.addEventListener('click', showRandomQuotes);
+  el.quoteDisplay.textContent = 'Click "Show Random" to see a quote.';
+  el.quoteCategory.textContent = '';
+
+  el.randomBtn.addEventListener('click', showRandomQuote);
+
+  el.showAddFormBtn.addEventListener('click', function () {
+    if (el.addQuoteContainer.children.length > 0) {
+      el.addQuoteContainer.innerHTML = '';
+    } else {
+      createAddQuoteForm(el.addQuoteContainer);
+    }
+  });
 }
 
 init();
 
-function addQuote() {
-  const text = ref.newQuoteTextInput.value.trim();
-  const category = ref.newQuoteCategoryInput.value.trim();
-
-  // simple validation
-  if (text.length < 3) {
-    ref.message.textContent = "Quote is too short.";
-    ref.message.style.color = "red";
-    return;
+// expose for easy testing
+window.quoteManager = {
+  showRandomQuote,
+  createAddQuoteForm,
+  getQuotes: () => quotes.slice(),
+  addQuote: (text, category) => {
+    const t = String(text || '').trim();
+    const c = String(category || '').trim();
+    if (!t || !c) return false;
+    quotes.push({ text: t, category: c });
+    saveQuotes();
+    return true;
   }
-  if (category.length < 2) {
-    ref.message.textContent = "Category is too short.";
-    ref.message.style.color = "red";
-    return;
-  }
-
-  // create new quote object
-  const newQuote = { text, category };
-
-  // push to quotes array
-  quotes.push(newQuote);
-
-  // save to localStorage
-  saveQuotes();
-
-  // show success message
-  ref.message.textContent = "Quote added successfully!";
-  ref.message.style.color = "green";
-
-  // clear inputs
-  ref.newQuoteTextInput.value = '';
-  ref.newQuoteCategoryInput.value = '';
-}
-
-ref.addQuoteBtn.addEventListener('click', addQuote);
-
-function init() {
-  loadQuotes();
-  ref.quoteDisplay.textContent = 'Click "Show New Quote" to see a quote.';
-  ref.newQuote.addEventListener('click', showRandomQuotes);
-  ref.addQuoteBtn.addEventListener('click', addQuote);
-}
-
-init();
+};
