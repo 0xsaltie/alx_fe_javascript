@@ -18,11 +18,22 @@
   <div id="message"></div>
 </div>
 
+<br> <br>
 <button id="exportQuotes">Export Quotes</button>
 
 <br><br>
 <input type="file" id="file" accept=".json" />
 <button id="importQuotes">Import Quotes</button>
+
+<br>
+<br>
+<label for="categoryFilter">Filter by Category:</label>
+<select id="categoryFilter" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+    <!-- Dynamically populated categories -->
+  </select>
+
+  <button id="newQuote">Show New Quote</button>
 
 
   <script src="script.js"></script>
