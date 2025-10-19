@@ -9,7 +9,10 @@ const el = {
   randomBtn: document.getElementById('randomBtn'),
   showAddFormBtn: document.getElementById('showAddFormBtn'),
   addQuoteContainer: document.getElementById('addQuoteContainer'),
-  exportBtn: document.getElementById('exportQuotes')
+  exportBtn: document.getElementById('exportQuotes'),
+  fileInput: document.getElementById('file'),
+  importBtn: document.getElementById('importQuotes')
+
 };
 
 const defaultQuotes = [
@@ -155,7 +158,7 @@ function init() {
 
   el.randomBtn.addEventListener('click', showRandomQuote);
   el.exportBtn.addEventListener('click', exportQuotes);
-
+  el.importBtn.addEventListener('click', importQuotes);
   el.showAddFormBtn.addEventListener('click', function () {
     if (el.addQuoteContainer.children.length > 0) {
       el.addQuoteContainer.innerHTML = '';
@@ -179,6 +182,31 @@ function exportQuotes() {
   link.click();
 }
 
+function importQuotes() {
+  const file = ref.fileInput.files[0];
+  if (!file) {
+    alert("Please select a file first!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const importedQuotes = JSON.parse(e.target.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes = importedQuotes;
+        saveQuotes();
+        alert("Quotes imported successfully!");
+      } else {
+        alert("Invalid file format.");
+      }
+    } catch (err) {
+      alert("Error reading file: " + err.message);
+    }
+  };
+
+  reader.readAsText(file);
+}
 
 
 init();
