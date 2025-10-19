@@ -1,5 +1,3 @@
-// script.js - full reference
-
 const STORAGE_KEY = 'quotes';
 let quotes = [];
 
@@ -233,7 +231,7 @@ function importQuotes() {
 }
 
 
-function populateCategoryFilter () {
+function populateCategories () {
 
     //reset the dropdoown to include only the 'All categories' option
 
@@ -279,7 +277,7 @@ window.quoteManager = {
 
 function init() {
   loadQuotes();              // Load quotes from localStorage or defaults
-  populateCategoryFilter();  // Build the dropdown
+  populateCategories();  // Build the dropdown
 
   // Show a message initially
   ref.quoteDisplay.textContent = 'Click "Show New Quote" to see a quote.';
