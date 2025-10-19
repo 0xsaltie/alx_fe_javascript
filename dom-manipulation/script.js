@@ -286,3 +286,75 @@ function init() {
   ref.newQuoteBtn.addEventListener('click', showRandomQuotes);
 }
 init();
+
+
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
+
+// Simulate fetching quotes from the "server"
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const data = await response.json();
+
+    // Simulate server quotes (just take first few and reshape them)
+    const serverQuotes = data.slice(0, 5).map(post => ({
+      text: post.title,
+      category: "Server"
+    }));
+
+    console.log("Fetched from server:", serverQuotes);
+    return serverQuotes;
+  } catch (error) {
+    console.error("Error fetching from server:", error);
+    return [];
+  }
+}
+
+async function syncWithServer() {
+  console.log("Syncing with server...");
+
+  const serverQuotes = await fetchQuotesFromServer();
+
+  // Simple conflict resolution: server data wins
+  let updated = false;
+
+  serverQuotes.forEach(serverQuote => {
+    const exists = quotes.some(localQuote => localQuote.text === serverQuote.text);
+
+    if (!exists) {
+      quotes.push(serverQuote);
+      updated = true;
+    }
+  });
+
+  if (updated) {
+    saveQuotes();
+    populateCategories();
+    notifyUser("Quotes updated from server!");
+  } else {
+    console.log("No new quotes found during sync.");
+  }
+}
+
+// Run sync every 30 seconds
+setInterval(syncWithServer, 30000);
+
+if (exists) {
+  const localQuote = quotes.find(q => q.text === serverQuote.text);
+  if (localQuote.category !== serverQuote.category) {
+    // Conflict — resolve by server taking precedence
+    localQuote.category = serverQuote.category;
+    updated = true;
+  }
+}
+
+function notifyUser(message) {
+  const note = document.getElementById("notification");
+  note.textContent = message;
+
+  setTimeout(() => {
+    note.textContent = "";
+  }, 5000); // clear after 5 seconds
+}
+
+document.getElementById("manualSync").addEventListener("click", syncWithServer);
