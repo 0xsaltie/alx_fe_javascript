@@ -428,7 +428,7 @@ async function syncQuotes() {
     if (updated) {
       saveQuotes();
       populateCategories();
-      notifyUser("Quotes synced successfully with server!");
+      notifyUser("Quotes synced with server!");
     } else {
       console.log("No changes during sync.");
     }
