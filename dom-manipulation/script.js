@@ -8,7 +8,8 @@ const el = {
   quoteCategory: document.getElementById('quoteCategory'),
   randomBtn: document.getElementById('randomBtn'),
   showAddFormBtn: document.getElementById('showAddFormBtn'),
-  addQuoteContainer: document.getElementById('addQuoteContainer')
+  addQuoteContainer: document.getElementById('addQuoteContainer'),
+  exportBtn: document.getElementById('exportQuotes')
 };
 
 const defaultQuotes = [
@@ -153,6 +154,7 @@ function init() {
   el.quoteCategory.textContent = '';
 
   el.randomBtn.addEventListener('click', showRandomQuote);
+  el.exportBtn.addEventListener('click', exportQuotes);
 
   el.showAddFormBtn.addEventListener('click', function () {
     if (el.addQuoteContainer.children.length > 0) {
@@ -162,6 +164,22 @@ function init() {
     }
   });
 }
+
+function exportQuotes() {
+  // convert quotes array to text
+  const dataStr = JSON.stringify(quotes, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+
+  // create a hidden download link
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'quotes.json';
+
+  // simulate a click to start download
+  link.click();
+}
+
+
 
 init();
 
