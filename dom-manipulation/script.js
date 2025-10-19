@@ -289,13 +289,23 @@ init();
 
 
 const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
-
 // Simulate fetching quotes from the "server"
 async function fetchQuotesFromServer() {
   try {
-    const response = await fetch(SERVER_URL);
-    const data = await response.json();
+    const response = await fetch(SERVER_URL,
+         {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quote)
+    });
 
+    const data = await response.json();
+ 
+    console.log("Server accepted new quote:", data);
+
+    notifyUser("Quote synced with server!");
     // Simulate server quotes (just take first few and reshape them)
     const serverQuotes = data.slice(0, 5).map(post => ({
       text: post.title,
@@ -309,6 +319,12 @@ async function fetchQuotesFromServer() {
     return [];
   }
 }
+
+const newQuote = { text, category };
+quotes.push(newQuote);
+saveQuotes();
+
+postQuoteToServer(newQuote); // ✅ send new quote to server
 
 async function syncWithServer() {
   console.log("Syncing with server...");
